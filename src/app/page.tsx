@@ -1,5 +1,8 @@
 "use client";
 
+import { StatusBar } from "@/components/StatusBar";
+import { Footer } from "@/components/Footer";
+
 import { useState } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { snsService } from "@/lib/sns";
@@ -88,6 +91,8 @@ export default function AgensolDashboard() {
   };
 
   return (
+    <>
+      <StatusBar />
     <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
       <header className="flex justify-between items-center pb-6 border-b border-brand-border">
         <div>
@@ -263,5 +268,7 @@ export default function AgensolDashboard() {
         )}
       </main>
     </div>
+      <Footer />
+    </>
   );
 }
