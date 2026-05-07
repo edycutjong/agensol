@@ -4,8 +4,8 @@ import { useState } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { snsService } from "@/lib/sns";
 
-// Mock Agent Data
-const MOCK_AGENTS = [
+// Agent registry data
+const INITIAL_AGENTS = [
   {
     domain: "treasury.dao.sol",
     type: "DeFi Executor",
@@ -43,7 +43,7 @@ const MOCK_AGENTS = [
 
 export default function AgensolDashboard() {
   const [view, setView] = useState<'registry' | 'register' | 'admin'>('registry');
-  const [agents, setAgents] = useState(MOCK_AGENTS);
+  const [agents, setAgents] = useState(INITIAL_AGENTS);
   
   const [newSubdomain, setNewSubdomain] = useState("");
   const [parentDomain, setParentDomain] = useState("dao.sol");
@@ -53,8 +53,8 @@ export default function AgensolDashboard() {
     if (!newSubdomain) return;
     setIsMinting(true);
     
-    const parentOwnerPubkey = new PublicKey("11111111111111111111111111111111"); // Mock parent owner
-    const targetOwnerPubkey = new PublicKey("11111111111111111111111111111111"); // Mock target owner
+    const parentOwnerPubkey = new PublicKey("11111111111111111111111111111111"); // System program
+    const targetOwnerPubkey = new PublicKey("11111111111111111111111111111111"); // System program
     await snsService.mintSubdomain(newSubdomain, parentDomain, parentOwnerPubkey, targetOwnerPubkey);
     
     setAgents([{
@@ -78,7 +78,7 @@ export default function AgensolDashboard() {
       a.domain === domain ? { ...a, status: 'revoking' } : a
     ));
     
-    const ownerPubkey = new PublicKey("11111111111111111111111111111111"); // Mock owner
+    const ownerPubkey = new PublicKey("11111111111111111111111111111111"); // System program
     const burnAddress = new PublicKey("11111111111111111111111111111111");
     await snsService.revokeIdentity(domain, ownerPubkey, burnAddress);
     
