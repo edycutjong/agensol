@@ -1,274 +1,489 @@
 "use client";
 
-import { StatusBar } from "@/components/StatusBar";
-import { Footer } from "@/components/Footer";
-
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { snsService } from "@/lib/sns";
+import { StatusBar } from "@/components/StatusBar";
+import { Footer } from "@/components/Footer";
+import { ParticleField } from "@/components/ParticleField";
+import { AgentTerminal } from "@/components/AgentTerminal";
+import { MetricsPanel } from "@/components/MetricsPanel";
+import { AgentCard } from "@/components/AgentCard";
+import type { AgentData } from "@/components/AgentCard";
+import { KillSwitch } from "@/components/KillSwitch";
+import { ScrambleText } from "@/components/ScrambleText";
 
-// Agent registry data
-const INITIAL_AGENTS = [
+const SEED_AGENTS: AgentData[] = [
   {
     domain: "treasury.dao.sol",
     type: "DeFi Executor",
-    owner: "7X...aB",
+    owner: "7X8mRjk...dFaB",
     status: "active",
+    registeredAt: "2026-05-06T09:00:00Z",
+    lastHeartbeat: "12s ago",
     config: {
-      max_spend: "1000 USDC",
+      max_spend: "1,000 USDC",
       allowed_protocols: ["Jupiter", "Meteora"],
-      heartbeat_interval: "5m"
-    }
+      heartbeat_interval: "5m",
+      system_prompt_hash: "a3f8c2...e91d",
+    },
   },
   {
     domain: "sniper.trading.sol",
     type: "Market Maker",
-    owner: "4R...xZ",
+    owner: "4R9kPx...xZ2L",
     status: "active",
+    registeredAt: "2026-05-06T10:30:00Z",
+    lastHeartbeat: "3s ago",
     config: {
       max_spend: "50 SOL",
       allowed_protocols: ["Raydium", "Orca"],
-      heartbeat_interval: "1m"
-    }
+      heartbeat_interval: "1m",
+      system_prompt_hash: "b7d1e4...f23a",
+    },
+  },
+  {
+    domain: "oracle.feeds.sol",
+    type: "Oracle",
+    owner: "8M2nQv...pK7R",
+    status: "active",
+    registeredAt: "2026-05-07T14:15:00Z",
+    lastHeartbeat: "1s ago",
+    config: {
+      max_spend: "0 SOL",
+      allowed_protocols: ["Pyth", "Switchboard"],
+      heartbeat_interval: "10s",
+      system_prompt_hash: "c9e3f6...d45b",
+    },
+  },
+  {
+    domain: "sweep.cleanup.sol",
+    type: "Sweeper",
+    owner: "5T3jAm...vN4W",
+    status: "active",
+    registeredAt: "2026-05-07T16:00:00Z",
+    lastHeartbeat: "45s ago",
+    config: {
+      max_spend: "100 USDC",
+      allowed_protocols: ["Jupiter"],
+      heartbeat_interval: "30m",
+    },
   },
   {
     domain: "arbitrage.bot.sol",
     type: "Arbitrage",
-    owner: "9K...pL",
+    owner: "Burn1111...1111",
     status: "revoked",
+    registeredAt: "2026-05-05T08:00:00Z",
+    lastHeartbeat: "REVOKED",
     config: {
-      max_spend: "10000 USDC",
+      max_spend: "10,000 USDC",
       allowed_protocols: ["All"],
-      heartbeat_interval: "10s"
-    }
-  }
+      heartbeat_interval: "10s",
+      system_prompt_hash: "REVOKED",
+    },
+  },
+];
+
+type View = "registry" | "register" | "terminal" | "admin";
+
+const NAV_ITEMS: { key: View; label: string; icon: string }[] = [
+  { key: "registry", label: "Registry", icon: "◆" },
+  { key: "register", label: "Mint", icon: "+" },
+  { key: "terminal", label: "Agent", icon: "▶" },
+  { key: "admin", label: "Kill Switch", icon: "⚠" },
 ];
 
 export default function AgensolDashboard() {
-  const [view, setView] = useState<'registry' | 'register' | 'admin'>('registry');
-  const [agents, setAgents] = useState(INITIAL_AGENTS);
-  
+  const [view, setView] = useState<View>("registry");
+  const [agents, setAgents] = useState<AgentData[]>(SEED_AGENTS);
   const [newSubdomain, setNewSubdomain] = useState("");
   const [parentDomain, setParentDomain] = useState("dao.sol");
   const [isMinting, setIsMinting] = useState(false);
+  const [mintSuccess, setMintSuccess] = useState(false);
+  const [triggerRevoke, setTriggerRevoke] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null);
+
+  const activeCount = agents.filter((a) => a.status === "active").length;
+  const revokedCount = agents.filter((a) => a.status === "revoked").length;
 
   const handleMint = async () => {
     if (!newSubdomain) return;
     setIsMinting(true);
-    
-    const parentOwnerPubkey = new PublicKey("11111111111111111111111111111111"); // System program
-    const targetOwnerPubkey = new PublicKey("11111111111111111111111111111111"); // System program
-    await snsService.mintSubdomain(newSubdomain, parentDomain, parentOwnerPubkey, targetOwnerPubkey);
-    
-    setAgents([{
+    const pk = new PublicKey("11111111111111111111111111111111");
+    await snsService.mintSubdomain(newSubdomain, parentDomain, pk, pk);
+
+    const newAgent: AgentData = {
       domain: `${newSubdomain}.${parentDomain}`,
       type: "Custom Agent",
       owner: "CurrentWallet",
       status: "active",
+      registeredAt: new Date().toISOString(),
+      lastHeartbeat: "just now",
       config: {
         max_spend: "0 USDC",
-        allowed_protocols: ["None"],
-        heartbeat_interval: "Unknown"
-      }
-    }, ...agents]);
+        allowed_protocols: [],
+        heartbeat_interval: "60s",
+      },
+    };
+    setAgents((prev) => [newAgent, ...prev]);
     setIsMinting(false);
-    setView('registry');
-    setNewSubdomain("");
+    setMintSuccess(true);
+    setTimeout(() => {
+      setMintSuccess(false);
+      setView("registry");
+      setNewSubdomain("");
+    }, 2000);
   };
 
   const handleRevoke = async (domain: string) => {
-    setAgents(agents.map(a => 
-      a.domain === domain ? { ...a, status: 'revoking' } : a
-    ));
-    
-    const ownerPubkey = new PublicKey("11111111111111111111111111111111"); // System program
-    const burnAddress = new PublicKey("11111111111111111111111111111111");
-    await snsService.revokeIdentity(domain, ownerPubkey, burnAddress);
-    
-    setAgents(agents.map(a => 
-      a.domain === domain ? { ...a, status: 'revoked', owner: 'BurnAddress111111111111111111111111111111111' } : a
-    ));
+    setAgents((prev) =>
+      prev.map((a) => (a.domain === domain ? { ...a, status: "revoking" as const } : a))
+    );
+
+    if (domain === "treasury.dao.sol") {
+      setTriggerRevoke(true);
+    }
+
+    const pk = new PublicKey("11111111111111111111111111111111");
+    await snsService.revokeIdentity(domain, pk, pk);
+
+    setTimeout(() => {
+      setAgents((prev) =>
+        prev.map((a) =>
+          a.domain === domain ? { ...a, status: "revoked" as const, owner: "Burn1111...1111", lastHeartbeat: "REVOKED" } : a
+        )
+      );
+    }, 2000);
   };
 
+  const handleRevokeComplete = useCallback(() => {
+    // Terminal revoke animation finished
+  }, []);
+
   return (
-    <>
+    <div className="min-h-screen flex flex-col grid-bg scanline relative">
+      <ParticleField />
       <StatusBar />
-    <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
-      <header className="flex justify-between items-center pb-6 border-b border-brand-border">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-            <span className="text-brand-primary">Agen</span>sol
-          </h1>
-          <p className="text-brand-muted mt-1 text-sm">SNS Identity Registry for AI Agents</p>
-        </div>
-        <div className="flex gap-2">
-          {['registry', 'register', 'admin'].map((tab) => (
-            <button 
-              key={tab}
-              onClick={() => setView(tab as any)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                view === tab 
-                  ? 'bg-brand-surface text-brand-primary border border-brand-primary/50' 
-                  : 'bg-transparent text-brand-muted hover:text-white'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-      </header>
 
-      <main>
-        {view === 'registry' && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold">Verified Agent Directory</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {agents.map(agent => (
-                <div key={agent.domain} className={`glass-panel p-6 rounded-xl relative overflow-hidden transition-all duration-300 ${agent.status === 'revoked' ? 'opacity-50 grayscale' : 'hover:neon-border'}`}>
-                  {agent.status === 'revoking' && <div className="absolute inset-0 bg-status-error/10 animate-pulse pointer-events-none"></div>}
-                  
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-bold text-lg font-mono text-white break-all pr-4">{agent.domain}</h3>
-                    <div className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${
-                      agent.status === 'active' ? 'bg-status-success/20 text-status-success' :
-                      agent.status === 'revoking' ? 'bg-status-warning/20 text-status-warning animate-pulse' :
-                      'bg-status-error/20 text-status-error'
-                    }`}>
-                      {agent.status}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3 font-mono text-sm">
-                    <div className="flex justify-between pb-2 border-b border-brand-border">
-                      <span className="text-brand-muted">Type</span>
-                      <span className="text-brand-primary">{agent.type}</span>
-                    </div>
-                    <div className="flex justify-between pb-2 border-b border-brand-border">
-                      <span className="text-brand-muted">Owner (Controller)</span>
-                      <span className="text-white truncate max-w-[120px]">{agent.owner}</span>
-                    </div>
-                    
-                    <div className="mt-4 p-3 bg-brand-bg border border-brand-border rounded-lg">
-                      <div className="text-xs text-brand-muted mb-2">SNS PROFILE RECORD (JSON)</div>
-                      <pre className="text-[10px] text-white/80 overflow-x-auto">
-                        {JSON.stringify(agent.config, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
+      <div className="relative z-10 flex-1 flex flex-col">
+        {/* Hero Header */}
+        <header className="px-6 pt-8 pb-6 max-w-7xl mx-auto w-full">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center neon-glow">
+                  <span className="text-brand-primary font-bold text-lg">A</span>
                 </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">
+                    <span className="text-brand-primary neon-text">
+                      <ScrambleText text="Agen" delay={200} />
+                    </span>
+                    <ScrambleText text="sol" delay={400} />
+                  </h1>
+                  <p className="text-[11px] font-mono text-brand-muted tracking-wider">
+                    AI AGENT IDENTITY REGISTRY ON SNS
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex gap-1 bg-brand-surface/50 p-1 rounded-xl border border-brand-border/50">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setView(item.key)}
+                  className={`px-4 py-2 rounded-lg font-mono text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
+                    view === item.key
+                      ? "bg-brand-primary/10 text-brand-primary border border-brand-primary/30 neon-border"
+                      : "text-brand-muted hover:text-white hover:bg-brand-surface"
+                  }`}
+                >
+                  <span className={view === item.key ? "text-brand-primary" : "text-brand-muted/50"}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                </button>
               ))}
-            </div>
+            </nav>
           </div>
-        )}
+        </header>
 
-        {view === 'register' && (
-          <div className="glass-panel p-8 rounded-xl max-w-2xl mx-auto space-y-6">
-            <div className="text-center pb-6 border-b border-brand-border">
-              <h2 className="text-2xl font-bold mb-2">Mint Agent Identity</h2>
-              <p className="text-brand-muted text-sm">Register a new AI agent sub-domain on SNS to establish on-chain identity and permissions.</p>
+        {/* Metrics */}
+        <div className="px-6 pb-6 max-w-7xl mx-auto w-full">
+          <MetricsPanel activeCount={activeCount} revokedCount={revokedCount} totalCount={agents.length} />
+        </div>
+
+        {/* Main Content */}
+        <main className="px-6 pb-12 max-w-7xl mx-auto w-full flex-1">
+          {/* ── REGISTRY VIEW ── */}
+          {view === "registry" && (
+            <div className="space-y-6 animate-fade-in-up">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold font-mono flex items-center gap-2">
+                  <span className="text-brand-primary">◆</span> Verified Agent Directory
+                </h2>
+                <span className="text-[10px] font-mono text-brand-muted">
+                  {agents.length} registered • {activeCount} active
+                </span>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {agents.map((agent, i) => (
+                  <AgentCard key={agent.domain} agent={agent} index={i} onSelect={setSelectedAgent} />
+                ))}
+              </div>
             </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-brand-muted mb-1">Agent Name (Sub-domain)</label>
-                <div className="flex">
-                  <input 
-                    type="text" 
-                    value={newSubdomain}
-                    onChange={(e) => setNewSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    className="flex-grow bg-brand-bg border border-brand-border rounded-l p-3 text-white font-mono focus:outline-none focus:border-brand-primary" 
-                    placeholder="e.g. tradingbot" 
-                  />
-                  <select 
-                    value={parentDomain}
-                    onChange={(e) => setParentDomain(e.target.value)}
-                    className="bg-brand-surface border-y border-r border-brand-border rounded-r p-3 text-white font-mono focus:outline-none"
-                  >
-                    <option value="dao.sol">.dao.sol</option>
-                    <option value="agency.sol">.agency.sol</option>
-                  </select>
+          )}
+
+          {/* ── REGISTER VIEW ── */}
+          {view === "register" && (
+            <div className="max-w-2xl mx-auto animate-fade-in-scale">
+              <div className="glass-panel-strong rounded-2xl p-8 space-y-6">
+                <div className="text-center pb-6 border-b border-brand-border/50">
+                  <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center mx-auto mb-4 neon-glow">
+                    <span className="text-3xl">🤖</span>
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2 font-mono">
+                    <ScrambleText text="Mint Agent Identity" delay={100} />
+                  </h2>
+                  <p className="text-brand-muted text-sm max-w-md mx-auto">
+                    Register a new AI agent sub-domain on SNS. The minted .sol passport becomes the agent&apos;s verifiable on-chain identity.
+                  </p>
+                </div>
+
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-[10px] font-mono font-bold text-brand-muted tracking-widest mb-2">
+                      AGENT SUB-DOMAIN
+                    </label>
+                    <div className="flex">
+                      <input
+                        type="text"
+                        value={newSubdomain}
+                        onChange={(e) => setNewSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                        className="grow bg-black/40 border border-brand-border rounded-l-lg p-3 text-white font-mono text-sm focus:outline-none focus:border-brand-primary focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] transition-all placeholder:text-brand-muted/30"
+                        placeholder="e.g. trading-bot"
+                      />
+                      <select
+                        value={parentDomain}
+                        onChange={(e) => setParentDomain(e.target.value)}
+                        className="bg-brand-surface border border-l-0 border-brand-border rounded-r-lg p-3 text-brand-primary font-mono text-sm focus:outline-none cursor-pointer"
+                      >
+                        <option value="dao.sol">.dao.sol</option>
+                        <option value="agency.sol">.agency.sol</option>
+                        <option value="trading.sol">.trading.sol</option>
+                      </select>
+                    </div>
+                    {newSubdomain && (
+                      <div className="mt-2 text-[11px] font-mono text-brand-primary/60 animate-slide-down">
+                        Preview: <span className="text-brand-primary font-bold">{newSubdomain}.{parentDomain}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono font-bold text-brand-muted tracking-widest mb-2">
+                      INITIAL PROFILE RECORD
+                    </label>
+                    <textarea
+                      className="w-full h-32 bg-black/40 border border-brand-border rounded-lg p-3 text-brand-primary/80 font-mono text-xs focus:outline-none focus:border-brand-primary transition-all resize-none"
+                      defaultValue={JSON.stringify({ max_spend: "0 SOL", allowed_protocols: [], heartbeat_interval: "60s" }, null, 2)}
+                    />
+                  </div>
+
+                  <div className="p-4 bg-brand-primary/5 border border-brand-primary/20 rounded-xl text-sm text-brand-muted flex items-start gap-3">
+                    <span className="text-brand-primary text-lg shrink-0">ℹ</span>
+                    <div className="space-y-1">
+                      <p className="text-brand-primary/80 font-medium text-xs">SNS Sub-Domain Minting</p>
+                      <p className="text-[11px]">The sub-domain is minted as a tokenized asset. The agent resolves its own identity via <code className="text-brand-primary bg-brand-primary/10 px-1 rounded">getDomainKeySync()</code> before executing any action.</p>
+                    </div>
+                  </div>
+
+                  {mintSuccess ? (
+                    <div className="w-full py-3 rounded-xl font-bold font-mono text-sm text-center bg-status-success/10 text-status-success border border-status-success/30 neon-green animate-fade-in-scale">
+                      ✓ MINTED SUCCESSFULLY
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleMint}
+                      disabled={isMinting || !newSubdomain}
+                      className={`w-full py-3 rounded-xl font-bold font-mono text-sm transition-all duration-300 btn-lift ${
+                        isMinting || !newSubdomain
+                          ? "bg-brand-surface text-brand-muted cursor-not-allowed border border-brand-border"
+                          : "bg-brand-primary text-black hover:bg-brand-primary-light neon-glow"
+                      }`}
+                    >
+                      {isMinting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40 20" />
+                          </svg>
+                          MINTING {newSubdomain}.{parentDomain}...
+                        </span>
+                      ) : (
+                        `MINT ${newSubdomain || "..."}.${parentDomain}`
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
-              
+            </div>
+          )}
+
+          {/* ── TERMINAL VIEW ── */}
+          {view === "terminal" && (
+            <div className="space-y-6 animate-fade-in-up">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold font-mono flex items-center gap-2">
+                  <span className="text-brand-primary">▶</span> Live Agent Terminal
+                </h2>
+                <span className="text-[10px] font-mono text-brand-muted">
+                  treasury.dao.sol • Self-Resolution Demo
+                </span>
+              </div>
+
+              <div className="grid lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <AgentTerminal triggerRevoke={triggerRevoke} onRevokeComplete={handleRevokeComplete} />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="glass-panel rounded-xl p-5 space-y-4 animate-fade-in-up delay-200">
+                    <h3 className="text-sm font-bold font-mono flex items-center gap-2">
+                      <span className="text-brand-accent">⬡</span> SNS SDK Integration
+                    </h3>
+                    <div className="space-y-3">
+                      {[
+                        { feature: "Resolution", desc: "Agent resolves own .sol before every action", used: true },
+                        { feature: "Sub-domains", desc: "bot.alice.sol hierarchical namespace", used: true },
+                        { feature: "Profile Records", desc: "JSON config: spend limits, protocols, hash", used: true },
+                        { feature: "Registration", desc: "Programmatic sub-domain minting", used: true },
+                        { feature: "Transfer", desc: "Domain transfer = kill switch", used: true },
+                      ].map((f) => (
+                        <div key={f.feature} className="flex items-start gap-3 text-xs font-mono">
+                          <span className={`mt-0.5 ${f.used ? "text-status-success" : "text-brand-muted/30"}`}>
+                            {f.used ? "✓" : "○"}
+                          </span>
+                          <div>
+                            <span className="text-white font-semibold">{f.feature}</span>
+                            <p className="text-brand-muted text-[10px] mt-0.5">{f.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="glass-panel rounded-xl p-5 space-y-3 animate-fade-in-up delay-300">
+                    <h3 className="text-sm font-bold font-mono flex items-center gap-2">
+                      <span className="text-status-error">⚠</span> Kill Switch Demo
+                    </h3>
+                    <p className="text-[11px] text-brand-muted">
+                      Transfer the sub-domain to a burn address. The agent detects the identity change and shuts down immediately.
+                    </p>
+                    {!triggerRevoke ? (
+                      <button
+                        onClick={() => {
+                          setTriggerRevoke(true);
+                          handleRevoke("treasury.dao.sol");
+                        }}
+                        className="w-full py-2.5 rounded-lg font-bold font-mono text-xs bg-status-error/10 text-status-error border border-status-error/30 hover:bg-status-error hover:text-white transition-all duration-300 btn-lift hover:neon-red"
+                      >
+                        ⚠ REVOKE treasury.dao.sol
+                      </button>
+                    ) : (
+                      <div className="text-center py-2 text-[11px] font-mono text-status-error animate-pulse">
+                        Kill switch activated — watch the terminal ←
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ADMIN VIEW ── */}
+          {view === "admin" && (
+            <div className="space-y-6 animate-fade-in-up">
               <div>
-                <label className="block text-sm font-medium text-brand-muted mb-1">Initial Profile Record (Config)</label>
-                <textarea 
-                  className="w-full h-32 bg-brand-bg border border-brand-border rounded p-3 text-white font-mono text-sm focus:outline-none focus:border-brand-primary"
-                  defaultValue={JSON.stringify({ "max_spend": "0 SOL", "allowed_protocols": [] }, null, 2)}
-                ></textarea>
+                <h2 className="text-lg font-bold font-mono flex items-center gap-2 mb-2">
+                  <span className="text-status-error">⚠</span> Emergency Kill Switches
+                </h2>
+                <p className="text-sm text-brand-muted max-w-2xl">
+                  Instantly revoke any agent&apos;s identity by transferring the sub-domain to a burn address. Protocols relying on SNS resolution will immediately reject the agent.
+                </p>
               </div>
 
-              <div className="p-4 bg-brand-primary/10 border border-brand-primary/30 rounded-lg text-sm text-brand-primary flex items-start gap-3">
-                <span className="text-lg">ℹ️</span>
-                <p>Minting this sub-domain transfers ownership to the registering wallet. The agent can resolve its own identity via SNS to read its config.</p>
-              </div>
-
-              <button 
-                onClick={handleMint}
-                disabled={isMinting || !newSubdomain}
-                className={`w-full py-3 mt-4 rounded font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] ${
-                  isMinting || !newSubdomain
-                    ? 'bg-brand-surface text-brand-muted cursor-not-allowed border border-brand-border shadow-none'
-                    : 'bg-brand-primary text-black hover:bg-brand-primary/90 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)]'
-                }`}
-              >
-                {isMinting ? 'Minting & Configuring SNS Record...' : `Mint ${newSubdomain || '...'}.${parentDomain}`}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {view === 'admin' && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <span className="text-status-error">⚠️</span> Emergency Kill Switches (Revocation)
-            </h2>
-            <p className="text-brand-muted max-w-2xl">
-              If an agent goes rogue or is compromised, you can instantly revoke its identity by transferring the sub-domain to a burn address. Protocols relying on SNS identity resolution will immediately reject the agent.
-            </p>
-
-            <div className="bg-status-error/10 border border-status-error/30 rounded-xl p-6">
-              <table className="w-full text-left font-mono text-sm">
-                <thead className="text-brand-muted border-b border-status-error/30">
-                  <tr>
-                    <th className="pb-3">Agent Domain</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-status-error/10">
-                  {agents.map(agent => (
-                    <tr key={agent.domain} className={agent.status === 'revoked' ? 'opacity-50' : ''}>
-                      <td className="py-4 text-white">{agent.domain}</td>
-                      <td className="py-4">
-                        <span className={`px-2 py-1 rounded text-xs uppercase ${agent.status === 'active' ? 'text-status-success' : 'text-status-error'}`}>
-                          {agent.status}
-                        </span>
-                      </td>
-                      <td className="py-4 text-right">
-                        {agent.status === 'active' ? (
-                          <button 
-                            onClick={() => handleRevoke(agent.domain)}
-                            className="px-4 py-2 bg-status-error hover:bg-status-error/80 text-white rounded font-bold transition-colors shadow-[0_0_10px_rgba(239,68,68,0.3)]"
-                          >
-                            REVOKE IDENTITY
-                          </button>
-                        ) : agent.status === 'revoking' ? (
-                          <span className="text-status-warning animate-pulse">Transferring to burn address...</span>
-                        ) : (
-                          <span className="text-brand-muted">REVOKED</span>
-                        )}
-                      </td>
-                    </tr>
+              <div className="glass-panel rounded-xl overflow-hidden border-status-error/20">
+                <div className="px-6 py-3 bg-status-error/5 border-b border-status-error/10">
+                  <span className="text-[10px] font-mono text-status-error/60 tracking-widest font-bold">
+                    AGENT REVOCATION PANEL
+                  </span>
+                </div>
+                <div className="divide-y divide-brand-border/30">
+                  {agents.map((agent) => (
+                    <div key={agent.domain} className={`px-6 py-4 flex items-center justify-between ${agent.status === "revoked" ? "opacity-40" : "hover:bg-brand-surface/30"} transition-colors`}>
+                      <div className="flex items-center gap-4">
+                        <span className={`status-pill status-${agent.status}`}>{agent.status}</span>
+                        <div>
+                          <span className="font-mono text-sm text-white font-bold">{agent.domain}</span>
+                          <p className="text-[10px] font-mono text-brand-muted">{agent.type} • Owner: {agent.owner}</p>
+                        </div>
+                      </div>
+                      <KillSwitch
+                        domain={agent.domain}
+                        isActive={agent.status === "active"}
+                        isRevoking={agent.status === "revoking"}
+                        onRevoke={() => handleRevoke(agent.domain)}
+                      />
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        <Footer />
+      </div>
+
+      {/* Agent Detail Modal */}
+      {selectedAgent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedAgent(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative glass-panel-strong rounded-2xl p-6 max-w-lg w-full animate-fade-in-scale" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setSelectedAgent(null)} className="absolute top-4 right-4 text-brand-muted hover:text-white text-lg">✕</button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center">
+                <span className="text-2xl">🤖</span>
+              </div>
+              <div>
+                <h3 className="font-bold font-mono text-lg">{selectedAgent.domain}</h3>
+                <p className="text-xs text-brand-muted font-mono">{selectedAgent.type}</p>
+              </div>
+            </div>
+            <div className="space-y-3 text-xs font-mono">
+              <div className="flex justify-between py-2 border-b border-brand-border/30">
+                <span className="text-brand-muted">Status</span>
+                <span className={`status-pill status-${selectedAgent.status}`}>{selectedAgent.status}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-brand-border/30">
+                <span className="text-brand-muted">Owner</span>
+                <span className="text-white">{selectedAgent.owner}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-brand-border/30">
+                <span className="text-brand-muted">Registered</span>
+                <span className="text-white">{new Date(selectedAgent.registeredAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-black/40 border border-brand-border/30 rounded-xl">
+              <div className="text-[9px] text-brand-muted/50 tracking-widest mb-2">PROFILE RECORD</div>
+              <pre className="text-[11px] font-mono text-brand-primary/80 overflow-x-auto">{JSON.stringify(selectedAgent.config, null, 2)}</pre>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
-      <Footer />
-    </>
   );
 }
