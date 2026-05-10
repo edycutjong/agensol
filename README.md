@@ -5,10 +5,10 @@
   
   <br/>
   
-  [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg)](https://agensol.edycu.dev)
-  [![Pitch Deck](https://img.shields.io/badge/Pitch-Deck-f59e0b.svg)](https://agensol.edycu.dev/pitch)
-  [![Pitch Video](https://img.shields.io/badge/Pitch-Video-red.svg)](https://youtube.com/your-video)
-  [![Superteam Earn](https://img.shields.io/badge/Superteam-Earn_Listing-blue.svg)](https://superteam.fun/earn/listing/sns-identity-track-colosseum-hackathon-powered-by-sns-stmy-magicblock)
+  [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=for-the-badge)](https://agensol.edycu.dev)
+  [![Pitch Deck](https://img.shields.io/badge/Pitch-Deck-f59e0b.svg?style=for-the-badge)](https://agensol.edycu.dev/pitch)
+  [![Pitch Video](https://img.shields.io/badge/Pitch-Video-red.svg?style=for-the-badge)](https://youtube.com/your-video)
+  [![Superteam Earn](https://img.shields.io/badge/Superteam-Earn_Listing-blue.svg?style=for-the-badge)](https://superteam.fun/earn/listing/sns-identity-track-colosseum-hackathon-powered-by-sns-stmy-magicblock)
 
   <br/>
 
@@ -16,7 +16,7 @@
   ![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
   ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
   ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
-  ![Vitest](https://img.shields.io/badge/Vitest-FCC72B?style=flat&logo=vitest&logoColor=white)
+  [![Agensol CI](https://github.com/edycutjong/frontier-sns-identity/actions/workflows/ci.yml/badge.svg)](https://github.com/edycutjong/frontier-sns-identity/actions/workflows/ci.yml)
 </div>
 
 ---
@@ -58,7 +58,7 @@ For a detailed breakdown of our system architecture and data flow, please refer 
 
 ## 🚀 Run it Locally (For Judges)
 
-1. **Clone the repo:** `git clone https://github.com/edycutjong/frontier-sns-identity.git`
+1. **Clone the repo:** `git clone https://github.com/edycutjong/agensol.git`
 2. **Install dependencies:** `npm install`
 3. **Set up environment variables:**
    ```bash
