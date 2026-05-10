@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
 import { agentStore } from "@/lib/agent-store";
 import { snsService } from "@/lib/sns";
 import type { AgentData } from "@/lib/types";
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Agent already exists" }, { status: 409 });
   }
 
-  await snsService.mintSubdomain(subdomain, parentDomain);
+  await snsService.mintSubdomain(subdomain, parentDomain, PublicKey.default, PublicKey.default);
 
   const agent: AgentData = {
     domain,
