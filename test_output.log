@@ -1,0 +1,49 @@
+
+> agensol@0.1.0 ci
+> npm run lint && npm run typecheck && npm run test:coverage
+
+
+> agensol@0.1.0 lint
+> eslint .
+
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-sns-identity/coverage/block-navigation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-sns-identity/src/app/layout.tsx
+  30:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-sns-identity/src/components/ScrambleText.tsx
+  51:5  error  'timeout' is never reassigned. Use 'const' instead  prefer-const
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-sns-identity/src/components/StatusBar.tsx
+  11:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-sns-identity/src/components/StatusBar.tsx:11:5
+   9 |
+  10 |   useEffect(() => {
+> 11 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  12 |     const interval = setInterval(() => {
+  13 |       setTime(new Date());
+  14 |       setLatency(Math.floor(8 + Math.random() * 12));  react-hooks/set-state-in-effect
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-sns-identity/src/lib/sns.ts
+   29:14  warning  '_err' is defined but never used          @typescript-eslint/no-unused-vars
+   43:5   warning  '_parentOwner' is defined but never used  @typescript-eslint/no-unused-vars
+   44:5   warning  '_targetOwner' is defined but never used  @typescript-eslint/no-unused-vars
+   59:14  warning  '_err' is defined but never used          @typescript-eslint/no-unused-vars
+   70:40  warning  '_owner' is defined but never used        @typescript-eslint/no-unused-vars
+   70:59  warning  '_burnAddress' is defined but never used  @typescript-eslint/no-unused-vars
+   84:14  warning  '_err' is defined but never used          @typescript-eslint/no-unused-vars
+  105:14  warning  '_err' is defined but never used          @typescript-eslint/no-unused-vars
+
+✖ 12 problems (2 errors, 10 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
