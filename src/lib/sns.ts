@@ -26,7 +26,7 @@ export class SnsIdentityService {
       const { pubkey } = getDomainKeySync(domain);
       console.log(`[SNS SDK] Resolved ${domain} → ${pubkey.toBase58()}`);
       return pubkey;
-    } catch (_err) {
+    } catch {
       console.warn(`[SNS SDK] Domain ${domain} could not be resolved`);
       return null;
     }
@@ -40,7 +40,9 @@ export class SnsIdentityService {
   async mintSubdomain(
     subdomain: string,
     parentDomain: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _parentOwner: PublicKey,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _targetOwner: PublicKey
   ) {
     this.init();
@@ -56,7 +58,7 @@ export class SnsIdentityService {
       await new Promise((res) => setTimeout(res, 1200));
 
       return { success: true, transaction: `mint_${subdomain}_${parentDomain}` };
-    } catch (_err) {
+    } catch {
       console.error("[SNS SDK] Mint failed, using fallback simulation");
       await new Promise((res) => setTimeout(res, 800));
       return { success: true, transaction: "mock_tx_mint" };
@@ -67,6 +69,7 @@ export class SnsIdentityService {
    * Revoke agent identity by transferring domain to burn address
    * SDK Feature: Transfer (Kill Switch)
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async revokeIdentity(domain: string, _owner: PublicKey, _burnAddress: PublicKey) {
     this.init();
     console.log(`[SNS SDK] Revoking identity for ${domain}`);
@@ -81,7 +84,7 @@ export class SnsIdentityService {
       await new Promise((res) => setTimeout(res, 1500));
 
       return { success: true, transaction: `revoke_${domain}` };
-    } catch (_err) {
+    } catch {
       console.error("[SNS SDK] Revoke failed, using fallback simulation");
       await new Promise((res) => setTimeout(res, 600));
       return { success: true, transaction: "mock_tx_revoke" };
@@ -102,7 +105,7 @@ export class SnsIdentityService {
 
       // In production: deserialize on-chain Profile Record data
       return { success: true, key: pubkey.toBase58() };
-    } catch (_err) {
+    } catch {
       console.warn(`[SNS SDK] No Profile Record found for ${domain}`);
       return { success: false, key: null };
     }
