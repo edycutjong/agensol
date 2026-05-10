@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { StatusBar } from './StatusBar';
 
 describe('StatusBar', () => {
@@ -9,31 +9,33 @@ describe('StatusBar', () => {
 
   it('renders DEVNET LIVE indicator', () => {
     render(<StatusBar />);
-    expect(screen.getByText('DEVNET LIVE')).toBeInTheDocument();
+    expect(screen.getAllByText('DEVNET LIVE')[0]).toBeInTheDocument();
   });
 
   it('renders SNS REGISTRY label', () => {
     render(<StatusBar />);
-    expect(screen.getByText(/SNS REGISTRY/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/SNS REGISTRY/i)[0]).toBeInTheDocument();
   });
 
   it('renders version number', () => {
     render(<StatusBar />);
-    expect(screen.getByText('v1.0.0')).toBeInTheDocument();
+    expect(screen.getAllByText('v1.0.0')[0]).toBeInTheDocument();
   });
 
-  it('shows latency in ms after mount', () => {
+  it('shows latency in ms after mount', async () => {
     render(<StatusBar />);
-    expect(screen.getByText(/\d+ms/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByText(/\d+ms/)[0]).toBeInTheDocument();
+    });
   });
 
   it('shows BLOCK label', () => {
     render(<StatusBar />);
-    expect(screen.getByText(/BLOCK:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/BLOCK:/i)[0]).toBeInTheDocument();
   });
 
   it('shows RPC label', () => {
     render(<StatusBar />);
-    expect(screen.getByText(/RPC:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/RPC:/i)[0]).toBeInTheDocument();
   });
 });

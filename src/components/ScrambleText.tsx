@@ -15,7 +15,6 @@ export function ScrambleText({ text, className = "", delay = 0 }: ScrambleTextPr
   const frameRef = useRef(0);
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
     let frame = 0;
     const totalFrames = text.length * 3;
 
@@ -48,7 +47,7 @@ export function ScrambleText({ text, className = "", delay = 0 }: ScrambleTextPr
       return interval;
     };
 
-    timeout = setTimeout(() => {
+    const timeout = setTimeout(() => {
       const interval = start();
       return () => clearInterval(interval);
     }, delay);

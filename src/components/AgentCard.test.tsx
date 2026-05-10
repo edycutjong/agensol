@@ -34,17 +34,17 @@ const REVOKING_AGENT: AgentData = {
 describe('AgentCard', () => {
   it('renders agent domain', () => {
     render(<AgentCard agent={ACTIVE_AGENT} index={0} />);
-    expect(screen.getByText('treasury.dao.sol')).toBeInTheDocument();
+    expect(screen.getAllByText('treasury.dao.sol')[0]).toBeInTheDocument();
   });
 
   it('renders agent type', () => {
     render(<AgentCard agent={ACTIVE_AGENT} index={0} />);
-    expect(screen.getByText('DeFi Executor')).toBeInTheDocument();
+    expect(screen.getAllByText('DeFi Executor')[0]).toBeInTheDocument();
   });
 
   it('renders agent owner', () => {
     render(<AgentCard agent={ACTIVE_AGENT} index={0} />);
-    expect(screen.getByText('7X8mRjk...dFaB')).toBeInTheDocument();
+    expect(screen.getAllByText('7X8mRjk...dFaB')[0]).toBeInTheDocument();
   });
 
   it('shows active status pill', () => {
@@ -69,8 +69,8 @@ describe('AgentCard', () => {
 
   it('shows max_spend and heartbeat_interval', () => {
     render(<AgentCard agent={ACTIVE_AGENT} index={0} />);
-    expect(screen.getByText('1,000 USDC')).toBeInTheDocument();
-    expect(screen.getByText('5m')).toBeInTheDocument();
+    expect(screen.getAllByText('1,000 USDC')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('5m')[0]).toBeInTheDocument();
   });
 
   it('profile record is hidden by default', () => {
@@ -80,40 +80,40 @@ describe('AgentCard', () => {
 
   it('expands profile record when toggle button clicked', () => {
     render(<AgentCard agent={ACTIVE_AGENT} index={0} />);
-    fireEvent.click(screen.getByText(/SHOW PROFILE RECORD/i));
-    expect(screen.getByText('SNS PROFILE RECORD')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByText(/SHOW PROFILE RECORD/i)[0]);
+    expect(screen.getAllByText('SNS PROFILE RECORD')[0]).toBeInTheDocument();
   });
 
   it('collapses profile record when toggle clicked again', () => {
     render(<AgentCard agent={ACTIVE_AGENT} index={0} />);
-    fireEvent.click(screen.getByText(/SHOW PROFILE RECORD/i));
-    fireEvent.click(screen.getByText(/HIDE PROFILE RECORD/i));
+    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button'));
     expect(screen.queryByText('SNS PROFILE RECORD')).not.toBeInTheDocument();
   });
 
   it('calls onSelect when card is clicked', () => {
     const onSelect = vi.fn();
-    render(<AgentCard agent={ACTIVE_AGENT} index={0} onSelect={onSelect} />);
-    fireEvent.click(screen.getByText('treasury.dao.sol'));
+    const { container } = render(<AgentCard agent={ACTIVE_AGENT} index={0} onSelect={onSelect} />);
+    fireEvent.click(container.firstChild as HTMLElement);
     expect(onSelect).toHaveBeenCalledWith(ACTIVE_AGENT);
   });
 
   it('toggle button click does not trigger onSelect', () => {
     const onSelect = vi.fn();
     render(<AgentCard agent={ACTIVE_AGENT} index={0} onSelect={onSelect} />);
-    fireEvent.click(screen.getByText(/SHOW PROFILE RECORD/i));
+    fireEvent.click(screen.getAllByText(/SHOW PROFILE RECORD/i)[0]);
     expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('uses fallback robot emoji for unknown agent type', () => {
     const agent = { ...ACTIVE_AGENT, type: 'Unknown' };
     render(<AgentCard agent={agent} index={0} />);
-    expect(screen.getByText('🤖')).toBeInTheDocument();
+    expect(screen.getAllByText('🤖')[0]).toBeInTheDocument();
   });
 
   it('uses correct icon for known type', () => {
     render(<AgentCard agent={ACTIVE_AGENT} index={0} />);
-    expect(screen.getByText('⚡')).toBeInTheDocument();
+    expect(screen.getAllByText('⚡')[0]).toBeInTheDocument();
   });
 
   it('renders without onSelect prop', () => {

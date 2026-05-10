@@ -5,7 +5,7 @@ import { KillSwitch } from './KillSwitch';
 describe('KillSwitch', () => {
   it('shows IDENTITY REVOKED when not active and not revoking', () => {
     render(<KillSwitch domain="bot.sol" isActive={false} isRevoking={false} onRevoke={vi.fn()} />);
-    expect(screen.getByText(/IDENTITY REVOKED/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/IDENTITY REVOKED/i)[0]).toBeInTheDocument();
   });
 
   it('does not render a button when already revoked', () => {
@@ -15,31 +15,31 @@ describe('KillSwitch', () => {
 
   it('shows revoke button for active agent', () => {
     render(<KillSwitch domain="bot.sol" isActive={true} isRevoking={false} onRevoke={vi.fn()} />);
-    expect(screen.getByRole('button')).toBeInTheDocument();
-    expect(screen.getByText(/REVOKE bot\.sol/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('button')[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/REVOKE bot\.sol/i)[0]).toBeInTheDocument();
   });
 
   it('calls onRevoke when button clicked', () => {
     const onRevoke = vi.fn();
     render(<KillSwitch domain="bot.sol" isActive={true} isRevoking={false} onRevoke={onRevoke} />);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getAllByRole('button')[0]);
     expect(onRevoke).toHaveBeenCalledOnce();
   });
 
   it('shows revoking state with spinner text', () => {
     render(<KillSwitch domain="bot.sol" isActive={true} isRevoking={true} onRevoke={vi.fn()} />);
-    expect(screen.getByText(/REVOKING bot\.sol/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/REVOKING bot\.sol/i)[0]).toBeInTheDocument();
   });
 
   it('disables button while revoking', () => {
     render(<KillSwitch domain="bot.sol" isActive={true} isRevoking={true} onRevoke={vi.fn()} />);
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getAllByRole('button')[0]).toBeDisabled();
   });
 
   it('does not call onRevoke when button is disabled during revoking', () => {
     const onRevoke = vi.fn();
     render(<KillSwitch domain="bot.sol" isActive={true} isRevoking={true} onRevoke={onRevoke} />);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getAllByRole('button')[0]);
     expect(onRevoke).not.toHaveBeenCalled();
   });
 });

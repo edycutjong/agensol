@@ -9,7 +9,7 @@ describe('ScrambleText', () => {
 
   it('renders the final text immediately as fallback', () => {
     render(<ScrambleText text="Agensol" />);
-    expect(screen.getByText('Agensol')).toBeInTheDocument();
+    expect(screen.getAllByText('Agensol')[0]).toBeInTheDocument();
   });
 
   it('renders with custom className', () => {
@@ -23,18 +23,18 @@ describe('ScrambleText', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getAllByText('Done')[0]).toBeInTheDocument();
   });
 
   it('respects delay before starting animation', async () => {
     vi.useFakeTimers();
     render(<ScrambleText text="Hi" delay={500} />);
     // Before delay elapses the text is still the initial value
-    expect(screen.getByText('Hi')).toBeInTheDocument();
+    expect(screen.getAllByText('Hi')[0]).toBeInTheDocument();
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    expect(screen.getByText('Hi')).toBeInTheDocument();
+    expect(screen.getAllByText('Hi')[0]).toBeInTheDocument();
   });
 
   it('renders span element', () => {

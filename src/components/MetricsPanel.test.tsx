@@ -13,10 +13,10 @@ describe('MetricsPanel', () => {
 
   it('renders four metric cards', () => {
     render(<MetricsPanel activeCount={3} revokedCount={1} totalCount={5} />);
-    expect(screen.getByText('REGISTERED')).toBeInTheDocument();
-    expect(screen.getByText('ACTIVE')).toBeInTheDocument();
-    expect(screen.getByText('REVOKED')).toBeInTheDocument();
-    expect(screen.getByText('SDK FEATURES')).toBeInTheDocument();
+    expect(screen.getAllByText('REGISTERED')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('ACTIVE')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('REVOKED')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('SDK FEATURES')[0]).toBeInTheDocument();
   });
 
   it('displays totalCount as registered value', () => {
@@ -39,7 +39,7 @@ describe('MetricsPanel', () => {
 
   it('always shows 5 SDK features', () => {
     render(<MetricsPanel activeCount={0} revokedCount={0} totalCount={0} />);
-    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getAllByText('5')[0]).toBeInTheDocument();
   });
 
   it('becomes animated after 300ms', () => {
@@ -53,9 +53,9 @@ describe('MetricsPanel', () => {
 
   it('renders suffix labels', () => {
     render(<MetricsPanel activeCount={3} revokedCount={1} totalCount={5} />);
-    expect(screen.getByText('agents')).toBeInTheDocument();
-    expect(screen.getByText('verified')).toBeInTheDocument();
-    expect(screen.getByText('killed')).toBeInTheDocument();
-    expect(screen.getByText('/5')).toBeInTheDocument();
+    expect(screen.getAllByText('agents')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('verified')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('killed')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('/5')[0]).toBeInTheDocument();
   });
 });

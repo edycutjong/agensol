@@ -8,12 +8,15 @@ export function StatusBar() {
   const [latency, setLatency] = useState(() => 12);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
     const interval = setInterval(() => {
       setTime(new Date());
       setLatency(Math.floor(8 + Math.random() * 12));
     }, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   return (

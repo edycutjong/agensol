@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
 import { agentStore } from "@/lib/agent-store";
 import { snsService } from "@/lib/sns";
+
+const BURN_ADDRESS = new PublicKey("11111111111111111111111111111111");
 
 export async function POST(
   _request: Request,
@@ -18,7 +21,8 @@ export async function POST(
     return NextResponse.json({ error: "Agent already revoked" }, { status: 409 });
   }
 
-  await snsService.revokeIdentity(decoded);
+  // In production, owner comes from wallet adapter session
+  await snsService.revokeIdentity(decoded, BURN_ADDRESS, BURN_ADDRESS);
   agentStore.revoke(decoded);
 
   return NextResponse.json({ success: true, domain: decoded });
