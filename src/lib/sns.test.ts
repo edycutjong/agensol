@@ -8,7 +8,7 @@ vi.mock('@bonfida/spl-name-service', () => ({
 
 vi.mock('@solana/web3.js', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Connection: vi.fn(function () {} as any),
+  Connection: vi.fn(function () {} as never),
 }));
 
 import { SnsIdentityService } from './sns';
@@ -51,7 +51,7 @@ describe('SnsIdentityService', () => {
   describe('mintSubdomain', () => {
     it('mints successfully and returns correct transaction id', async () => {
       vi.useFakeTimers();
-      const p = service.mintSubdomain('bot', 'dao.sol');
+      const p = service.mintSubdomain('bot', 'dao.sol', {} as never, {} as never);
       await vi.runAllTimersAsync();
       const result = await p;
       expect(result.success).toBe(true);
@@ -64,7 +64,7 @@ describe('SnsIdentityService', () => {
         throw new Error('Network error');
       });
       vi.useFakeTimers();
-      const p = service.mintSubdomain('bot', 'dao.sol');
+      const p = service.mintSubdomain('bot', 'dao.sol', {} as never, {} as never);
       await vi.runAllTimersAsync();
       const result = await p;
       expect(result.success).toBe(true);
@@ -76,7 +76,7 @@ describe('SnsIdentityService', () => {
   describe('revokeIdentity', () => {
     it('revokes and returns correct transaction id', async () => {
       vi.useFakeTimers();
-      const p = service.revokeIdentity('treasury.dao.sol');
+      const p = service.revokeIdentity('treasury.dao.sol', {} as never, {} as never);
       await vi.runAllTimersAsync();
       const result = await p;
       expect(result.success).toBe(true);
@@ -89,7 +89,7 @@ describe('SnsIdentityService', () => {
         throw new Error('Network error');
       });
       vi.useFakeTimers();
-      const p = service.revokeIdentity('treasury.dao.sol');
+      const p = service.revokeIdentity('treasury.dao.sol', {} as never, {} as never);
       await vi.runAllTimersAsync();
       const result = await p;
       expect(result.success).toBe(true);
